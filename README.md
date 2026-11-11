@@ -2,75 +2,88 @@
 
 ![csix-headers banner](assets/banner.png)
 
-**Pemeriksa security headers website — grade A+ s/d F, murni Go, single binary.**
+**Website security headers checker — grade A+ to F, pure Go, single binary.**
 
 [![CI](https://github.com/siedysoes/csix-headers/actions/workflows/ci.yml/badge.svg)](https://github.com/siedysoes/csix-headers/actions/workflows/ci.yml)
+[![Release](https://github.com/siedysoes/csix-headers/actions/workflows/release.yml/badge.svg)](https://github.com/siedysoes/csix-headers/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-`csix-headers` mengambil sebuah URL lalu menilai 9 pemeriksaan header
-keamanan — memberi **skor 0–100 + grade huruf (A+ … F)** beserta saran
-perbaikan konkret untuk setiap kekurangan.
+`csix-headers` fetches a URL and scores 9 security header checks — giving a
+**0–100 score + letter grade (A+ … F)** along with concrete fixes for every
+missing or weak header.
 
-Mirip [securityheaders.com](https://securityheaders.com), tapi: CLI,
-gratis tanpa batas, output JSON, dan bisa dipakai di CI.
+Similar to [securityheaders.com](https://securityheaders.com), but: CLI,
+free with no limits, JSON output, and CI-friendly.
 
-## Fitur
+## Features
 
-- 🎓 **Grade A+ s/d F** + skor numerik transparan
-- ✅ 9 pemeriksaan: HSTS, CSP, X-Content-Type-Options,
+- 🎓 **Grade A+ to F** + transparent numeric score
+- ✅ 9 checks: HSTS, CSP, X-Content-Type-Options,
   X-Frame-Options/frame-ancestors, Referrer-Policy, Permissions-Policy,
   COOP, COEP, CORP
-- 💡 **Saran perbaikan konkret** untuk setiap header yang kurang
-- 🔔 Catatan info: kebocoran versi server (`Server`, `X-Powered-By`),
-  header deprecated (`X-XSS-Protection`)
-- 📦 `--json` untuk integrasi tooling
-- ⚡ Single binary, nol dependency
+- 💡 **Concrete fix suggestions** for every weak header
+- 🔔 Info notes: server version leaks (`Server`, `X-Powered-By`),
+  deprecated headers (`X-XSS-Protection`)
+- 📦 `--json` for tooling integration
+- ⚡ Single binary, zero dependencies
 
-## Instalasi
+## Installation
+
+### Prebuilt binaries
+
+Download the latest binary for your platform from the
+[Releases page](https://github.com/siedysoes/csix-headers/releases/latest)
+(Windows / Linux / macOS, amd64 + arm64), then verify it:
+
+```sh
+sha256sum -c checksums.txt
+```
+
+### Go
 
 ```sh
 go install github.com/siedysoes/csix-headers@latest
 ```
 
-## Penggunaan
+## Usage
 
 ```sh
 csix-headers https://example.com
-csix-headers --json https://siedoyses.github.io
+csix-headers --json https://example.com
 ```
 
-Contoh output:
+Example output:
 
 ```
-csix-headers v0.1.0 — pemeriksa security headers
+csix-headers v0.1.0 — security headers checker
 
   Target   https://example.com
-  Skor     9/100   Grade F
+  Score    9/100   Grade F
   ──────────────────────────────────────────────────────────────
   ✗ Strict-Transport-Security (HSTS)               0/20
       → Strict-Transport-Security: max-age=31536000; includeSubDomains
   ✗ Content-Security-Policy (CSP)                  0/20
       → Content-Security-Policy: default-src 'self'; object-src 'none'; ...
-  ~ Referrer-Policy                                5/10  (mengikuti default browser)
+  ~ Referrer-Policy                                5/10  (follows browser default)
   ...
 ```
 
-## Opsi
+## Options
 
-| Flag | Fungsi |
-|------|--------|
-| `--json` | Output JSON |
-| `--min-score <n>` | Skor minimal lolos (default 65 → di bawah ini exit 1) |
-| `--timeout <dur>` | Timeout request (default `10s`) |
-| `--insecure` | Abaikan verifikasi TLS |
-| `--no-color` | Matikan warna (juga menghormati `NO_COLOR`) |
-| `--version` | Tampilkan versi |
+| Flag | Description |
+|------|-------------|
+| `--json` | JSON output |
+| `--min-score <n>` | Minimum passing score (default 65 → exits 1 below this) |
+| `--timeout <dur>` | Request timeout (default `10s`) |
+| `--insecure` | Skip TLS certificate verification |
+| `--no-color` | Disable colored output (also honors `NO_COLOR`) |
+| `--version` | Print version |
 
-**Exit code:** `0` lolos · `1` skor di bawah ambang · `2` error
+**Exit codes:** `0` pass · `1` score below threshold · `2` error
 
-## Skoring
+## Scoring
 
-| Header | Bobot |
+| Header | Weight |
 |--------|-------|
 | Strict-Transport-Security | 20 |
 | Content-Security-Policy | 20 |
@@ -80,17 +93,17 @@ csix-headers v0.1.0 — pemeriksa security headers
 | Permissions-Policy | 10 |
 | COOP · COEP · CORP | 5 + 5 + 5 |
 
-**Grade** = persentase skor terhadap maksimum:
+**Grade** = score as a percentage of the maximum:
 `A+` 100 · `A` 90 · `A-` 80 · `B` 65 · `C` 50 · `D` 35 · `F` <35
 
-Target `http://` dinilai tanpa HSTS (maksimum 80) karena HSTS hanya berlaku
-di atas HTTPS.
+`http://` targets are scored without HSTS (maximum 80) because HSTS only
+applies over HTTPS.
 
-## Dukungan Bahasa
+## Languages
 
 - English (this file)
 - [Bahasa Indonesia](README.id.md)
 
-## Lisensi
+## License
 
-MIT — lihat [LICENSE](LICENSE). Untuk tujuan defensif.
+MIT — see [LICENSE](LICENSE). For defensive purposes.

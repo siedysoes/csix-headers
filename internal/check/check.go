@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// Version adalah versi tool.
-const Version = "0.1.0"
+// Version adalah versi tool (di-inject saat rilis lewat -ldflags).
+var Version = "0.1.0"
 
 // Status hasil sebuah pemeriksaan.
 type Status string
@@ -98,16 +98,16 @@ func Evaluate(target *url.URL, h http.Header) Report {
 	add(corpCheck(h))
 
 	if s := h.Get("Server"); s != "" && versionedRE.MatchString(s) {
-		rep.Notes = append(rep.Notes, "Server: "+s+" — sembunyikan identitas & versi server")
+		rep.Notes = append(rep.Notes, "Server: "+s+" — hide server identity and version")
 	}
 	if s := h.Get("X-Powered-By"); s != "" {
-		rep.Notes = append(rep.Notes, "X-Powered-By: "+s+" — hapus header ini")
+		rep.Notes = append(rep.Notes, "X-Powered-By: "+s+" — remove this header")
 	}
 	if s := h.Get("X-XSS-Protection"); s != "" {
-		rep.Notes = append(rep.Notes, "X-XSS-Protection: "+s+" — header deprecated, hapus atau set 0")
+		rep.Notes = append(rep.Notes, "X-XSS-Protection: "+s+" — deprecated header, remove it or set 0")
 	}
 	if s := h.Get("X-AspNet-Version"); s != "" {
-		rep.Notes = append(rep.Notes, "X-AspNet-Version: "+s+" — hapus header ini")
+		rep.Notes = append(rep.Notes, "X-AspNet-Version: "+s+" — remove this header")
 	}
 
 	rep.Max = max
@@ -132,7 +132,7 @@ func hstsCheck(h http.Header, isHTTPS bool) Check {
 	v := h.Get("Strict-Transport-Security")
 	if !isHTTPS {
 		c.Status = StatusInfo
-		c.Value = "HSTS dinilai hanya untuk target HTTPS"
+		c.Value = "HSTS is only evaluated for HTTPS targets"
 		return c
 	}
 	if v == "" {
@@ -154,11 +154,11 @@ func hstsCheck(h http.Header, isHTTPS bool) Check {
 	case age >= 15552000:
 		c.Status = StatusPartial
 		c.Weight = 12
-		c.Advice = "naikkan max-age ke >= 31536000 (1 tahun)"
+		c.Advice = "raise max-age to >= 31536000 (1 year)"
 	default:
 		c.Status = StatusPartial
 		c.Weight = 6
-		c.Advice = "max-age terlalu pendek — gunakan >= 31536000"
+		c.Advice = "max-age is too short — use >= 31536000"
 	}
 	return c
 }
@@ -200,7 +200,7 @@ func cspCheck(h http.Header, dirs map[string]string) Check {
 	if unsafe {
 		c.Status = StatusPartial
 		c.Weight = 8
-		c.Advice = "hilangkan 'unsafe-inline'/'unsafe-eval' — gunakan nonce/hash"
+		c.Advice = "remove 'unsafe-inline'/'unsafe-eval' — use a nonce or hash"
 		return c
 	}
 	c.Status = StatusPass
@@ -232,7 +232,7 @@ func xfoCheck(h http.Header, dirs map[string]string) Check {
 	c := Check{
 		Name:   "X-Frame-Options / frame-ancestors",
 		Max:    10,
-		Advice: "X-Frame-Options: SAMEORIGIN (atau CSP: frame-ancestors 'none')",
+		Advice: "X-Frame-Options: SAMEORIGIN (or CSP: frame-ancestors 'none')",
 	}
 	if fa, ok := dirs["frame-ancestors"]; ok && fa != "" {
 		c.Status = StatusPass
@@ -252,7 +252,7 @@ func xfoCheck(h http.Header, dirs map[string]string) Check {
 		c.Status = StatusPartial
 		c.Weight = 5
 		c.Value = v + " (deprecated)"
-		c.Advice = "ALLOW-FROM sudah deprecated — gunakan CSP frame-ancestors"
+		c.Advice = "ALLOW-FROM is deprecated — use CSP frame-ancestors"
 	default:
 		c.Status = StatusPartial
 		c.Weight = 5
@@ -269,7 +269,7 @@ func referrerCheck(h http.Header) Check {
 	case "":
 		c.Status = StatusPartial
 		c.Weight = 5
-		c.Value = "(mengikuti default browser)"
+		c.Value = "(follows browser default)"
 	case "no-referrer", "same-origin", "strict-origin", "strict-origin-when-cross-origin":
 		c.Status = StatusPass
 		c.Weight = 10
@@ -281,7 +281,7 @@ func referrerCheck(h http.Header) Check {
 	case "unsafe-url":
 		c.Status = StatusFail
 		c.Value = v
-		c.Advice = "unsafe-url membocorkan URL penuh — ganti strict-origin-when-cross-origin"
+		c.Advice = "unsafe-url leaks the full URL — switch to strict-origin-when-cross-origin"
 	default:
 		c.Status = StatusPartial
 		c.Weight = 5

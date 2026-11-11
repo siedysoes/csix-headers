@@ -22,12 +22,12 @@ func main() {
 		minScore    int
 		timeout     time.Duration
 	)
-	flag.BoolVar(&jsonOut, "json", false, "output JSON")
-	flag.IntVar(&minScore, "min-score", 65, "skor minimal lolos (di bawah ini exit 1)")
+	flag.BoolVar(&jsonOut, "json", false, "JSON output")
+	flag.IntVar(&minScore, "min-score", 65, "minimum passing score (below this exits 1)")
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "timeout HTTP request")
-	flag.BoolVar(&insecure, "insecure", false, "abaikan verifikasi sertifikat TLS")
-	flag.BoolVar(&noColor, "no-color", false, "matikan warna output")
-	flag.BoolVar(&showVersion, "version", false, "tampilkan versi")
+	flag.BoolVar(&insecure, "insecure", false, "skip TLS certificate verification")
+	flag.BoolVar(&noColor, "no-color", false, "disable colored output")
+	flag.BoolVar(&showVersion, "version", false, "print version")
 	flag.Parse()
 
 	if showVersion {
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	if flag.NArg() < 1 {
-		fmt.Fprintln(os.Stderr, "penggunaan: csix-headers <url>   (contoh: csix-headers https://example.com)")
+		fmt.Fprintln(os.Stderr, "usage: csix-headers <url>   (example: csix-headers https://example.com)")
 		fmt.Fprintln(os.Stderr, "           csix-headers --json <url>")
 		os.Exit(2)
 	}
@@ -47,7 +47,7 @@ func main() {
 
 	target, headers, err := check.Fetch(raw, timeout, insecure)
 	if err != nil {
-		fatal("gagal mengambil " + raw + ": " + err.Error())
+		fatal("failed to fetch " + raw + ": " + err.Error())
 	}
 	rep := check.Evaluate(target, headers)
 
@@ -71,7 +71,7 @@ func main() {
 }
 
 func printReport(rep check.Report, original string, redirected bool) {
-	fmt.Println(ui.Wrap(ui.Bold, "csix-headers v"+check.Version) + ui.Wrap(ui.Gray, " — pemeriksa security headers"))
+	fmt.Println(ui.Wrap(ui.Bold, "csix-headers v"+check.Version) + ui.Wrap(ui.Gray, " — security headers checker"))
 	fmt.Println()
 
 	gradeColor := ui.Green
@@ -86,7 +86,7 @@ func printReport(rep check.Report, original string, redirected bool) {
 	if redirected {
 		fmt.Printf("  %-8s %s\n", "Final", ui.Wrap(ui.Gray, rep.URL))
 	}
-	fmt.Printf("  %-8s %d/%d   Grade %s\n", "Skor", rep.Score, rep.Max, ui.Wrap(ui.Bold+";"+gradeColor, rep.Grade))
+	fmt.Printf("  %-8s %d/%d   Grade %s\n", "Score", rep.Score, rep.Max, ui.Wrap(ui.Bold+";"+gradeColor, rep.Grade))
 	fmt.Println(ui.Wrap(ui.Gray, strings.Repeat("─", 58)))
 
 	for _, c := range rep.Checks {
@@ -116,13 +116,13 @@ func printReport(rep check.Report, original string, redirected bool) {
 
 	if len(rep.Notes) > 0 {
 		fmt.Println()
-		fmt.Println(ui.Wrap(ui.Gray, "Catatan:"))
+		fmt.Println(ui.Wrap(ui.Gray, "Notes:"))
 		for _, n := range rep.Notes {
 			fmt.Println(ui.Wrap(ui.Gray, "  • "+n))
 		}
 	}
 	fmt.Println()
-	fmt.Println(ui.Wrap(ui.Gray, "grade: A+ 100 · A 90 · A- 80 · B 65 · C 50 · D 35 · F <35 (persentase dari skor maksimal)"))
+	fmt.Println(ui.Wrap(ui.Gray, "grade: A+ 100 · A 90 · A- 80 · B 65 · C 50 · D 35 · F <35 (percentage of the maximum score)"))
 }
 
 func fatal(msg string) {
